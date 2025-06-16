@@ -41,10 +41,14 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        // Assign 'user' role after registration
+        $user->assignRole('user');
+
         event(new Registered($user));
 
         Auth::login($user);
 
-        return redirect()->route('user.menu');
+        // Arahkan ke user.dashboard agar konsisten dengan alur login
+        return redirect()->route('user.dashboard');
     }
 }

@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -13,25 +13,44 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $this->call([
+            RoleSeeder::class,
+        ]);
 
-        User::factory()->create([
+        // Buat User Admin
+        $admin = User::create([
             'name' => 'Admin',
             'email' => 'admin@example.com',
-            'role' => 'admin',
-            'password' => bcrypt('password'),
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+            'remember_token' => \Str::random(10),
         ]);
-        User::factory()->create([
+
+        // Assign role admin ke user admin
+        $admin->assignRole('admin');
+
+        // Buat User Seller
+        $seller = User::create([
             'name' => 'Seller',
             'email' => 'seller@example.com',
-            'role' => 'seller',
-            'password' => bcrypt('password'),
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+            'remember_token' => \Str::random(10),
         ]);
-        User::factory()->create([
+
+        // Assign role seller ke user seller
+        $seller->assignRole('seller');
+
+        // Buat User Regular
+        $user = User::create([
             'name' => 'User',
             'email' => 'user@example.com',
-            'role' => 'user',
-            'password' => bcrypt('password'),
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'),
+            'remember_token' => \Str::random(10),
         ]);
+
+        // Assign role user ke user regular
+        $user->assignRole('user');
     }
 }

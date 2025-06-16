@@ -3,15 +3,16 @@
 @section('content')
 <style>
     .login-card {
-        max-width: 400px;
-        margin: 0 auto;
+        max-width: 400px; /* Lebar maksimum kartu login */
         border-radius: 1.5rem;
         box-shadow: 0 8px 32px rgba(0,0,0,0.08);
         background: #fff;
         padding: 2.5rem 2rem 2rem 2rem;
+        /* Menggunakan margin auto agar kartu berada di tengah parent flex container */
+        margin: auto;
     }
     .login-logo {
-        width: 60px;
+        width: 150px;
         margin-bottom: 1rem;
         display: block;
         margin-left: auto;
@@ -69,8 +70,7 @@
     }
 </style>
 <div class="login-card">
-    <img src="https://cdn-icons-png.flaticon.com/512/3075/3075977.png" alt="Logo KantinKu" class="login-logo">
-    <h2 class="brand mb-1">KantinKu</h2>
+    <img src="{{ asset('img/logo1.png') }}" alt="Logo KantinKu" class="login-logo">
     <p class="text-center text-muted mb-4">Masuk untuk mulai memesan makanan.</p>
     @if(session('status'))
         <div class="alert alert-success">{{ session('status') }}</div>
@@ -88,20 +88,22 @@
         @csrf
         <div class="mb-3">
             <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control w-100" id="email" name="email" value="{{ old('email') }}" required autofocus>
+            <input type="email" class="form-control w-100 @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" required autofocus placeholder="Masukkan email Anda">
+            @error('email')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
         </div>
         <div class="mb-3">
             <label for="password" class="form-label">Password</label>
-            <input type="password" class="form-control w-100" id="password" name="password" required>
+            <input type="password" class="form-control w-100 @error('password') is-invalid @enderror" id="password" name="password" required placeholder="Masukkan kata sandi Anda">
+            @error('password')
+                <div class="invalid-feedback">{{ $message }}</div>
+            @enderror
         </div>
         <div class="mb-2">
             <a href="{{ route('password.request') }}" class="login-link small">Lupa password?</a>
         </div>
-        <div class="mb-3 d-flex align-items-center justify-content-between">
-            <div class="form-check m-0">
-                <input type="checkbox" class="form-check-input" id="remember" name="remember">
-                <label class="form-check-label" for="remember">Ingat saya</label>
-            </div>
+        <div class="mb-3 d-flex justify-content-end">
             <button type="submit" class="btn btn-kantin px-4">Masuk</button>
         </div>
     </form>

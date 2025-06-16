@@ -18,8 +18,7 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 });
 
 // Channel privat untuk chat antara dua user
-Broadcast::channel('chat.{receiverId}', function ($user, $receiverId) {
-    // Izinkan jika user adalah pengirim atau penerima
-    return (int) $user->id === (int) $receiverId;
-    // Jika ingin lebih kompleks (misal: cek relasi chat), tambahkan logika di sini.
+Broadcast::channel('chat.conversation.{conversationId}', function ($user, $conversationId) {
+    $conversation = \App\Models\Conversation::find($conversationId);
+    return $conversation && ($conversation->customer_id === $user->id || $conversation->seller_id === $user->id);
 });
