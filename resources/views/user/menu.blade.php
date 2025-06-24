@@ -99,67 +99,49 @@
     <div class="mb-4">
         <h4 class="fw-bold mb-3">Kantin Kampus</h4>
         <div class="row g-4">
-            <!-- Example kantin cards, replace with @foreach if dynamic -->
+            @forelse ($kantins as $kantin)
             <div class="col-md-3 col-6">
                 <div class="card kantin-card h-100">
-                    <span class="kantin-status">Buka</span>
-                    <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80" class="kantin-img" alt="Kantin Teknik">
+                    <span class="kantin-status {{ $kantin->is_open ? '' : 'closed' }}">
+                        {{ $kantin->is_open ? 'Buka' : 'Tutup' }}
+                    </span>
+                    <div class="kantin-img-container">
+                        @if($kantin->image)
+                            <img src="{{ $kantin->image_url }}"
+                                 alt="Gambar {{ $kantin->name }}"
+                                 class="kantin-img"
+                                 onerror="this.onerror=null; this.src='{{ asset('img/logo1.png') }}';">
+                        @else
+                            <img src="{{ asset('img/logo1.png') }}"
+                                 alt="Default Logo"
+                                 class="kantin-img">
+                        @endif
+                    </div>
                     <div class="card-body">
-                        <h5 class="card-title mb-1">Kantin Teknik</h5>
-                        <div class="small text-muted mb-1"><i class="bi bi-geo-alt me-1"></i> Fakultas Teknik, Lantai 1</div>
-                        <div class="small text-muted mb-1"><i class="bi bi-clock me-1"></i> 07:00 - 17:00</div>
+                        <h5 class="card-title mb-1">{{ $kantin->name }}</h5>
+                        <div class="small text-muted mb-1">
+                            <i class="bi bi-geo-alt me-1"></i> {{ $kantin->location }}
+                        </div>
+                        <div class="small text-muted mb-1">
+                            <i class="bi bi-clock me-1"></i> {{ $kantin->operating_hours ?? 'Jam Operasional' }}
+                        </div>
                         <div class="d-flex align-items-center mt-2">
                             <i class="bi bi-star-fill text-warning me-1"></i>
                             <span class="fw-semibold">4.5</span>
+                            <a href="{{ route('user.chat.index', ['seller_id' => $kantin->user_id, 'seller_name' => $kantin->user->name]) }}"
+                               class="btn btn-sm btn-outline-primary ms-auto"
+                               title="Chat dengan penjual">
+                                <i class="bi bi-chat-dots"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 col-6">
-                <div class="card kantin-card h-100">
-                    <span class="kantin-status">Buka</span>
-                    <img src="https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=400&q=80" class="kantin-img" alt="Kantin FMIPA">
-                    <div class="card-body">
-                        <h5 class="card-title mb-1">Kantin FMIPA</h5>
-                        <div class="small text-muted mb-1"><i class="bi bi-geo-alt me-1"></i> Fakultas MIPA, Lantai 2</div>
-                        <div class="small text-muted mb-1"><i class="bi bi-clock me-1"></i> 08:00 - 16:00</div>
-                        <div class="d-flex align-items-center mt-2">
-                            <i class="bi bi-star-fill text-warning me-1"></i>
-                            <span class="fw-semibold">4.2</span>
-                        </div>
-                    </div>
-                </div>
+            @empty
+            <div class="col-12">
+                <p class="text-center text-muted">Belum ada kantin yang tersedia saat ini.</p>
             </div>
-            <div class="col-md-3 col-6">
-                <div class="card kantin-card h-100">
-                    <span class="kantin-status">Buka</span>
-                    <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=400&q=80" class="kantin-img" alt="Kantin Ekonomi">
-                    <div class="card-body">
-                        <h5 class="card-title mb-1">Kantin Ekonomi</h5>
-                        <div class="small text-muted mb-1"><i class="bi bi-geo-alt me-1"></i> Fakultas Ekonomi, Lantai 1</div>
-                        <div class="small text-muted mb-1"><i class="bi bi-clock me-1"></i> 07:30 - 17:30</div>
-                        <div class="d-flex align-items-center mt-2">
-                            <i class="bi bi-star-fill text-warning me-1"></i>
-                            <span class="fw-semibold">4.7</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3 col-6">
-                <div class="card kantin-card h-100">
-                    <span class="kantin-status">Buka</span>
-                    <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=400&q=80" class="kantin-img" alt="Kantin Pusat">
-                    <div class="card-body">
-                        <h5 class="card-title mb-1">Kantin Pusat</h5>
-                        <div class="small text-muted mb-1"><i class="bi bi-geo-alt me-1"></i> Gedung Pusat, Lantai 2</div>
-                        <div class="small text-muted mb-1"><i class="bi bi-clock me-1"></i> 07:00 - 19:00</div>
-                        <div class="d-flex align-items-center mt-2">
-                            <i class="bi bi-star-fill text-warning me-1"></i>
-                            <span class="fw-semibold">4.8</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            @endforelse
         </div>
     </div>
     <!-- Menu Populer section can be added here if needed -->

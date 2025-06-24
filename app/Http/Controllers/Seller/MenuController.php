@@ -37,8 +37,9 @@ class MenuController extends Controller
         if (!$seller->kantin) {
             return redirect()->route('seller.menus.index')->with('error', 'Anda harus memiliki kantin untuk menambah menu.');
         }
-
-        return view('seller.menus.create');
+        // Instantiate a new Menu object for the create form
+        $menu = new Menu();
+        return view('seller.menus.create', compact('menu', 'seller'));
     }
 
     public function store(Request $request)
@@ -54,21 +55,51 @@ class MenuController extends Controller
             'stock' => 'required|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
+
         $imagePath = null;
         if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('public/menus');
-            $imagePath = str_replace('public/', '', $imagePath);
+            try {
+                // Buat direktori jika belum ada
+                if (!Storage::disk('public')->exists('menus')) {
+                    Storage::disk('public')->makeDirectory('menus');
+                }
 
+                // Simpan gambar dengan nama unik
+                $imagePath = $request->file('image')->store('menus', 'public');
+
+                if (!$imagePath) {
+                    return redirect()->back()->with('error', 'Gagal mengunggah gambar. Silakan coba lagi.');
+                }
+
+                // Log untuk debugging
+                \Log::info('Image uploaded successfully', [
+                    'path' => $imagePath,
+                    'full_path' => Storage::disk('public')->path($imagePath),
+                    'url' => Storage::disk('public')->url($imagePath)
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Error uploading image: ' . $e->getMessage());
+                return redirect()->back()->with('error', 'Terjadi kesalahan saat mengunggah gambar: ' . $e->getMessage());
+            }
         }
-        Menu::create([
-            'name' => $request->name,
-            'price' => $request->price,
-            'stock' => $request->stock,
-            'image' => $imagePath,
 
-            'kantin_id' => $seller->kantin->id,
-        ]);
-        return redirect()->route('seller.menus.index')->with('success', 'Menu berhasil ditambahkan.');
+        try {
+            Menu::create([
+                'name' => $request->name,
+                'price' => $request->price,
+                'stock' => $request->stock,
+                'image' => $imagePath,
+                'kantin_id' => $seller->kantin->id,
+            ]);
+            return redirect()->route('seller.menus.index')->with('success', 'Menu berhasil ditambahkan.');
+        } catch (\Exception $e) {
+            // Jika terjadi error, hapus gambar yang sudah diupload
+            if ($imagePath) {
+                Storage::disk('public')->delete($imagePath);
+            }
+            \Log::error('Error creating menu: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan menu: ' . $e->getMessage());
+        }
     }
 
 
@@ -93,16 +124,39 @@ class MenuController extends Controller
             'stock' => 'required|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
+
         $menuData = $request->only(['name', 'price', 'stock']);
+
         if ($request->hasFile('image')) {
-            if ($menu->image) {
-                Storage::delete('public/' . $menu->image);
+            try {
+                // Hapus gambar lama jika ada
+                if ($menu->image) {
+                    Storage::disk('public')->delete($menu->image);
+                }
+
+                // Upload gambar baru
+                $imagePath = $request->file('image')->store('menus', 'public');
+
+                if (!$imagePath) {
+                    return redirect()->back()->with('error', 'Gagal mengunggah gambar. Silakan coba lagi.');
+                }
+
+                $menuData['image'] = $imagePath;
+            } catch (\Exception $e) {
+                return redirect()->back()->with('error', 'Terjadi kesalahan saat mengunggah gambar. Silakan coba lagi.');
             }
-            $imagePath = $request->file('image')->store('public/menus');
-            $menuData['image'] = str_replace('public/', '', $imagePath);
         }
-         $menu->update($menuData);
-        return redirect()->route('seller.menus.index')->with('success', 'Menu berhasil diperbarui.');
+
+        try {
+            $menu->update($menuData);
+            return redirect()->route('seller.menus.index')->with('success', 'Menu berhasil diperbarui.');
+        } catch (\Exception $e) {
+            // Jika terjadi error saat update, hapus gambar baru jika ada
+            if (isset($imagePath)) {
+                Storage::disk('public')->delete($imagePath);
+            }
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui menu. Silakan coba lagi.');
+        }
     }
 
     public function destroy(Menu $menu)
@@ -112,7 +166,7 @@ class MenuController extends Controller
             abort(403, 'Akses ditolak.');
         }
         if ($menu->image) {
-            Storage::delete('public/' . $menu->image);
+            Storage::disk('public')->delete($menu->image); // Hapus gambar dari disk public
         }
 
         $menu->delete();

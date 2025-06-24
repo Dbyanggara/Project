@@ -1,4 +1,4 @@
-@extends('layouts.app') {{-- Menggunakan layout app utama, karena navbar akan didefinisikan di sini --}}
+@extends('layouts.app')
 
 @section('title', 'Kelola Menu Saya')
 
@@ -42,8 +42,7 @@
 </style>
 @endpush
 
-{{-- Navbar Seller sekarang di-handle oleh layouts.app.blade.php --}}
-<div class="container py-4"> {{-- style="margin-top: 80px;" dihapus --}}
+<div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
         <h1 class="h4 fw-bold"><i class="bi bi-card-list me-2"></i>Menu Saya</h1>
         <a href="{{ route('seller.menus.create') }}" class="btn btn-primary">
@@ -70,6 +69,29 @@
         </div>
     @endif
 
+    @if(!$menus->isEmpty())
+        @php
+            $menusHabis = $menus->filter(fn($m) => $m->stock == 0);
+        @endphp
+        @if($menusHabis->count() > 0)
+            <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2" style="font-size:1.5rem"></i>
+                <div>
+                    <strong>Beberapa menu stoknya habis!</strong>
+                    <ul class="mb-0">
+                        @foreach($menusHabis as $menu)
+                            <li>
+                                <a href="{{ route('seller.menus.edit', $menu->id) }}" class="text-decoration-underline fw-semibold">{{ $menu->name }}</a>
+                                <span class="badge bg-danger ms-1">Stok Habis</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                    <span class="text-muted">Segera isi ulang stok agar menu bisa dipesan kembali.</span>
+                </div>
+            </div>
+        @endif
+    @endif
+
     @if($menus->isEmpty())
         <div class="text-center py-5">
             <i class="bi bi-egg-fried display-1 text-muted"></i>
@@ -83,14 +105,26 @@
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
             @foreach ($menus as $menu)
             <div class="col">
-                <div class="card h-100 menu-card"> {{-- shadow-sm dihapus, sudah diatur di .menu-card --}}
-                    <img src="{{ $menu->image ? asset('storage/' . $menu->image) : 'https://via.placeholder.com/300x200.png?text=Menu' }}" class="card-img-top menu-img" alt="{{ $menu->name }}">
+                <div class="card h-100 menu-card">
+                    @php
+                        $imageUrl = $menu->image ? Storage::url($menu->image) : 'https://via.placeholder.com/300x200.png?text=Menu';
+                        $imageExists = $menu->image ? Storage::disk('public')->exists($menu->image) : false;
+                    @endphp
+                    <img src="{{ $imageUrl }}"
+                         class="card-img-top menu-img"
+                         alt="{{ $menu->name }}"
+                         onerror="this.onerror=null; this.src='https://via.placeholder.com/300x200.png?text=Menu'"
+                         data-original-path="{{ $menu->image }}"
+                         data-exists="{{ $imageExists ? 'true' : 'false' }}">
+                    @if(!$imageExists && $menu->image)
+                        <div class="alert alert-warning m-2">
+                            <small>Gambar tidak ditemukan: {{ $menu->image }}</small>
+                        </div>
+                    @endif
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">{{ $menu->name }}</h5>
                         <p class="card-text menu-price mb-1">Rp {{ number_format($menu->price, 0, ',', '.') }}</p>
                         <p class="card-text menu-stock text-muted"><small>Stok: {{ $menu->stock }}</small></p>
-                        {{-- Jika Anda memiliki field 'description' atau 'category', tampilkan di sini --}}
-                        {{-- <p class="card-text text-muted small">{{ Str::limit($menu->description, 50) }}</p> --}}
                         <div class="mt-auto pt-2 btn-actions">
                             <a href="{{ route('seller.menus.edit', $menu->id) }}" class="btn btn-outline-secondary btn-sm w-100 mb-1">
                                 <i class="bi bi-pencil-square"></i> Edit
@@ -111,12 +145,9 @@
     @endif
 
     <div class="mt-4">
-            @if($menus->hasPages())
-            <div class="mt-3">
-                {{ $menus->links() }}
-            </div>
-            @endif
-        </div>
+        @if($menus->hasPages())
+            {{ $menus->links() }}
+        @endif
     </div>
 </div>
 @endsection

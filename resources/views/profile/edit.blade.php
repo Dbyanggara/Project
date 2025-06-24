@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Profil Saya - KantinKu')
+@section('title', 'Edit Profil Saya')
 
 @push('styles')
 <style>
@@ -92,6 +92,7 @@
                         <div class="mb-3">
                             <label for="current_password" class="form-label">{{ __('Kata Sandi Saat Ini') }}</label>
                             <input id="current_password" name="current_password" type="password" class="form-control @error('current_password', 'updatePassword') is-invalid @enderror" autocomplete="current-password">
+                            <input type="hidden" name="username" autocomplete="username" value="{{ auth()->user()->email }}">
                             @error('current_password', 'updatePassword')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -99,6 +100,7 @@
                         <div class="mb-3">
                             <label for="password" class="form-label">{{ __('Kata Sandi Baru') }}</label>
                             <input id="password" name="password" type="password" class="form-control @error('password', 'updatePassword') is-invalid @enderror" autocomplete="new-password">
+                            <input type="hidden" name="username" autocomplete="username" value="{{ auth()->user()->email }}">
                             @error('password', 'updatePassword')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror

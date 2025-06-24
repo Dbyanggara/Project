@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
-// Jika Anda ingin menampilkan data, uncomment model yang relevan
-// use App\Models\User;
-// use App\Models\Order; // Contoh
+use App\Models\User;
+use App\Models\Order;
+use App\Models\Kantin;
 
 class AdminDashboardController extends Controller
 {
@@ -16,12 +16,19 @@ class AdminDashboardController extends Controller
      */
     public function index(): View
     {
-        // Data dummy untuk dashboard admin
-        $totalUsers = 150; // Contoh: User::count()
-        $totalKantins = 25; // Contoh: Kantin::count()
-        $totalOrders = 500; // Contoh: Order::count()
-        $totalRevenue = 75000000; // Contoh: Order::sum('total_price')
+        $totalUsers = User::role('user')->count();
+        $totalSellers = User::role('seller')->count();
+        $totalKantins = Kantin::count();
+        $totalOrders = Order::count();
+        $totalRevenue = Order::where('status', 'paid')->sum('total');
 
-        return view('admin.dashboard', compact('totalUsers', 'totalKantins', 'totalOrders', 'totalRevenue'));
+        $latestOrders = Order::with(['user'])->latest()->take(10)->get();
+        $latestUsers = User::role('user')->latest()->take(5)->get();
+        $latestSellers = User::role('seller')->latest()->take(5)->get();
+
+        return view('admin.dashboard', compact(
+            'totalUsers', 'totalSellers', 'totalKantins', 'totalOrders', 'totalRevenue',
+            'latestOrders', 'latestUsers', 'latestSellers'
+        ));
     }
 }

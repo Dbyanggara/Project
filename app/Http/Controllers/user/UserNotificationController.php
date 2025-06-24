@@ -1,67 +1,118 @@
 <?php
 
-namespace App\Http\Controllers\User; // Mengubah namespace sesuai dengan direktori baru
+namespace App\Http\Controllers\User;
 
-use App\Http\Controllers\Controller; // Menambahkan use statement untuk base Controller
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Auth;
-// App\Models\Notification tidak perlu di-import di sini jika kita menggunakan relasi dari User
+use App\Models\Notification;
 
 class UserNotificationController extends Controller
 {
     /**
-     * Menampilkan halaman notifikasi pengguna.
+     * Menampilkan daftar notifikasi pengguna.
      */
     public function index(): View
     {
-        $user = Auth::user();
+        $notifications = Notification::where('notifiable_type', 'App\Models\User')
+            ->where('notifiable_id', Auth::id())
+            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->paginate(15);
 
-        if (!$user) {
-            // Seharusnya ditangani oleh middleware auth, tapi sebagai penjagaan
-            abort(403, 'User tidak terautentikasi.');
-        }
+        // Count unread notifications
+        $unreadCount = Notification::where('notifiable_type', 'App\Models\User')
+            ->where('notifiable_id', Auth::id())
+            ->whereNull('read_at')
+            ->count();
 
-        // Mengambil notifikasi milik user yang login menggunakan relasi
-        // Paginasi juga bisa ditambahkan di sini jika diperlukan, contoh: ->paginate(15)
-        $notifications = $user->notifications()
-                               ->orderBy('created_at', 'desc')
-                               ->paginate(15); // Menggunakan paginasi
+        \Log::info('User notifications loaded', [
+            'user_id' => Auth::id(),
+            'notification_count' => $notifications->count(),
+            'total_count' => $notifications->total(),
+            'unread_count' => $unreadCount
+        ]);
 
-        // Variabel ini sudah ada di view dan sepertinya untuk global count
-        $unreadNotificationsCountGlobal = $user->unreadNotifications->count();
-
-        return view('user.notifications.index', compact('notifications', 'unreadNotificationsCountGlobal'));
+        return view('user.notifications.index', compact('notifications', 'unreadCount'));
     }
 
     /**
-     * Menandai semua notifikasi pengguna yang belum dibaca sebagai sudah dibaca.
+     * Menandai notifikasi sebagai telah dibaca.
+     */
+    public function markAsRead($notificationId)
+    {
+        try {
+            $notification = Notification::where('id', $notificationId)
+                ->where('notifiable_type', 'App\Models\User')
+                ->where('notifiable_id', Auth::id())
+                ->first();
+
+            if (!$notification) {
+                \Log::warning('Notification not found or unauthorized access', [
+                    'notification_id' => $notificationId,
+                    'user_id' => Auth::id()
+                ]);
+                return redirect()->back()->with('error', 'Notifikasi tidak ditemukan.');
+            }
+
+            if ($notification->read_at) {
+                return redirect()->back()->with('info', 'Notifikasi sudah ditandai sebagai dibaca.');
+            }
+
+            $notification->markAsRead();
+
+            \Log::info('Notification marked as read', [
+                'notification_id' => $notificationId,
+                'user_id' => Auth::id(),
+                'read_at' => $notification->read_at
+            ]);
+
+            return redirect()->back()->with('success', 'Notifikasi telah ditandai sebagai dibaca.');
+
+        } catch (\Exception $e) {
+            \Log::error('Error marking notification as read: ' . $e->getMessage(), [
+                'notification_id' => $notificationId,
+                'user_id' => Auth::id()
+            ]);
+
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menandai notifikasi sebagai dibaca.');
+        }
+    }
+
+    /**
+     * Menandai semua notifikasi sebagai telah dibaca.
      */
     public function markAllAsRead()
     {
-        $user = Auth::user();
-        if ($user) {
-            // Menggunakan relasi untuk menandai semua notifikasi yang belum dibaca
-            $user->unreadNotifications()->update(['read_at' => now()]);
-            return redirect()->route('user.notifications.index')
-                             ->with('success', 'Semua notifikasi telah ditandai sebagai sudah dibaca.');
-        }
-        return redirect()->route('user.notifications.index')
-                         ->with('error', 'Gagal menandai notifikasi.');
-    }
+        try {
+            $unreadCount = Notification::where('notifiable_type', 'App\Models\User')
+                ->where('notifiable_id', Auth::id())
+                ->whereNull('read_at')
+                ->count();
 
-    /**
-     * Menandai satu notifikasi sebagai sudah dibaca.
-     */
-    public function markAsRead(Request $request, string $notificationId)
-    {
-        $user = Auth::user();
-        $notification = $user->notifications()->where('id', $notificationId)->first();
+            if ($unreadCount === 0) {
+                return redirect()->back()->with('info', 'Tidak ada notifikasi yang belum dibaca.');
+            }
 
-        if ($notification && $notification->markAsRead()) { // Memanggil metode markAsRead dari model Notification
-            return redirect()->route('user.notifications.index')->with('success', 'Notifikasi ditandai sebagai sudah dibaca.');
+            $updatedCount = Notification::where('notifiable_type', 'App\Models\User')
+                ->where('notifiable_id', Auth::id())
+                ->whereNull('read_at')
+                ->update(['read_at' => now()]);
+
+            \Log::info('All notifications marked as read', [
+                'user_id' => Auth::id(),
+                'updated_count' => $updatedCount
+            ]);
+
+            return redirect()->back()->with('success', "{$updatedCount} notifikasi telah ditandai sebagai dibaca.");
+
+        } catch (\Exception $e) {
+            \Log::error('Error marking all notifications as read: ' . $e->getMessage(), [
+                'user_id' => Auth::id()
+            ]);
+
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menandai semua notifikasi sebagai dibaca.');
         }
-        return redirect()->route('user.notifications.index')
-                         ->with('error', 'Gagal menandai notifikasi atau notifikasi tidak ditemukan.');
     }
 }

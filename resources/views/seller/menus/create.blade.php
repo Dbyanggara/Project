@@ -5,7 +5,6 @@
 @section('content')
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
-        <h1 class="h4 fw-bold"><i class="bi bi-plus-circle-dotted me-2"></i>Tambah Menu Baru</h1>
         <a href="{{ route('seller.menus.index') }}" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-arrow-left"></i> Kembali ke Daftar Menu
         </a>

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Pesanan Saya - KantinKu')
+@section('title', 'Pesanan Saya')
 
 @push('styles')
 <style>
@@ -30,10 +30,18 @@
         color: #495057;
     }
     .order-status {
-        font-size: 0.85rem;
-        font-weight: 500;
-        padding: 0.25rem 0.6rem;
-        border-radius: 0.25rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 0.4rem 0.8rem;
+        border-radius: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+    .order-status:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
     .order-total {
         font-weight: bold;
@@ -51,6 +59,28 @@
     .btn-detail-pesanan {
         font-size: 0.9rem;
     }
+
+    /* Custom status colors yang konsisten dengan tema */
+    .badge.bg-primary {
+        background: linear-gradient(135deg, #0d6efd, #0b5ed7) !important;
+        border: 1px solid #0a58ca;
+    }
+    .badge.bg-success {
+        background: linear-gradient(135deg, #198754, #157347) !important;
+        border: 1px solid #146c43;
+    }
+    .badge.bg-info {
+        background: linear-gradient(135deg, #0dcaf0, #0aa2c0) !important;
+        border: 1px solid #099aa7;
+    }
+    .badge.bg-danger {
+        background: linear-gradient(135deg, #dc3545, #bb2d3b) !important;
+        border: 1px solid #b02a37;
+    }
+    .badge.bg-secondary {
+        background: linear-gradient(135deg, #6c757d, #5c636a) !important;
+        border: 1px solid #565e64;
+    }
 </style>
 @endpush
 
@@ -59,6 +89,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="fw-bold">Riwayat Pesanan Saya</h2>
     </div>
+
     @if($orders->isEmpty())
         <div class="card shadow-sm">
             <div class="card-body empty-orders">
@@ -71,37 +102,19 @@
             </div>
         </div>
     @else
-        @foreach($orders as $order)
-        <div class="card order-card mb-4 shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span>Pesanan: <strong>{{ $order->id }}</strong></span>
-                <span class="badge bg-{{ $order->status_color }} order-status">{{ $order->status }}</span>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-8">
-                        <div class="d-flex align-items-center mb-3">
-                            <img src="{{ $order->kantin_image }}" alt="{{ $order->kantin_name }}" class="kantin-img me-3">
-                            <div>
-                                <h5 class="mb-0">{{ $order->kantin_name }}</h5>
-                                <small class="text-muted">{{ $order->order_date->format('d M Y, H:i') }}</small>
-                            </div>
-                        </div>
-                        <ul class="list-unstyled order-item-list mb-0">
-                            @foreach($order->items as $item)
-                            <li>{{ $item->quantity }}x {{ $item->name }} <span class="text-muted">(@ Rp {{ number_format($item->price, 0, ',', '.') }})</span></li>
-                            @endforeach
-                        </ul>
-                    </div>
-                    <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                        <p class="mb-1 text-muted">Total Pembayaran:</p>
-                        <p class="order-total text-primary">Rp {{ number_format($order->total_price, 0, ',', '.') }}</p>
-                        <a href="{{ $order->link_detail }}" class="btn btn-outline-primary btn-sm btn-detail-pesanan">Lihat Detail</a>
-                    </div>
-                </div>
-            </div>
+        <div id="user-orders-list">
+            @foreach($orders as $order)
+                @include('user.pesanan._order_card', ['order' => $order])
+            @endforeach
         </div>
-        @endforeach
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // (Echo listener for .order.completed removed, now handled globally)
+});
+</script>
+@endpush

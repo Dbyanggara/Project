@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
+use App\Events\UserRegistered;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Spatie\Permission\Models\Role; // Menggunakan model Role dari Spatie secara langsung
 
 class RegisteredUserController extends Controller
 {
@@ -32,23 +36,60 @@ class RegisteredUserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'password' => [
+                'required',
+                'confirmed',
+                'min:8',
+                'max:255'
+            ],
+        ], [
+            'password.min' => 'Kata sandi minimal harus 8 karakter.',
+            'password.confirmed' => 'Konfirmasi kata sandi tidak cocok.',
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
+        try {
+            DB::beginTransaction();
 
-        // Assign 'user' role after registration
-        $user->assignRole('user');
+            Log::info('Starting user registration process', ['email' => $request->email]);
 
-        event(new Registered($user));
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
 
-        Auth::login($user);
+            Log::info('User created successfully', ['user_id' => $user->id]);
 
-        // Arahkan ke user.dashboard agar konsisten dengan alur login
-        return redirect()->route('user.dashboard');
+            // Check if 'user' role exists
+            if (!Role::where('name', 'user')->exists()) {
+                throw new \Exception('Role "user" does not exist in the database');
+            }
+
+            // Assign 'user' role after registration
+            $user->assignRole('user');
+            Log::info('Role assigned successfully', ['user_id' => $user->id, 'role' => 'user']);
+
+            event(new Registered($user));
+            event(new UserRegistered($user));
+            Log::info('Registration events fired', ['user_id' => $user->id]);
+
+            Auth::login($user);
+            Log::info('User logged in successfully', ['user_id' => $user->id]);
+
+            DB::commit();
+            Log::info('Registration completed successfully', ['user_id' => $user->id]);
+
+            // Redirect to user dashboard
+            return redirect()->route('user.dashboard');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Registration error: ' . $e->getMessage(), [
+                'exception' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return back()->withErrors(['error' => 'Terjadi kesalahan saat mendaftar. Silakan coba lagi.']);
+        }
     }
 }

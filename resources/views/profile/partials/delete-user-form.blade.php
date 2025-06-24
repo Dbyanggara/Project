@@ -1,7 +1,11 @@
 <div class="modal fade" id="confirmUserDeletionModal" tabindex="-1" aria-labelledby="confirmUserDeletionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <form method="post" action="{{ route('profile.destroy') }}">
+            {{-- Sesuaikan action route berdasarkan apakah user adalah seller atau bukan --}}
+            @php
+                $destroyRoute = Auth::user()->hasRole('seller') ? route('seller.profile.destroy') : route('profile.destroy');
+            @endphp
+            <form method="post" action="{{ $destroyRoute }}">
                 @csrf
                 @method('delete')
                 <div class="modal-header">

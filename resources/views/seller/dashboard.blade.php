@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Dashboard Penjual - KantinKu')
+@section('title', 'Dashboard')
 
 @push('styles')
 <style>
@@ -97,7 +97,7 @@
                     <div class="stat-icon me-3"><i class="bi bi-star-fill"></i></div>
                     <div>
                         <h6 class="card-subtitle mb-1 text-muted">Menu Terlaris</h6>
-                        <h4 class="card-title fw-bold">{{ $bestSellingMenu->name }} <small>({{ $bestSellingMenu->count }} porsi)</small></h4>
+                        <h4 class="card-title fw-bold">{{ $bestSellingMenu->name }} <small>({{ $bestSellingMenu->total_sold }} porsi)</small></h4>
                     </div>
                 </div>
             </div>
@@ -119,7 +119,7 @@
             <div class="card section-card">
                 <div class="card-header d-flex justify-content-between align-items-center"> {{-- bg-light dihapus, style diatur via CSS --}}
                     <h5 class="mb-0 fw-semibold"><i class="bi bi-list-check me-2"></i>Pesanan Aktif</h5>
-                    <a href="#" class="btn btn-sm btn-outline-primary">Lihat Semua Pesanan</a>
+                    <a href="{{ route('seller.orders.index') }}" class="btn btn-sm btn-outline-primary">Lihat Semua Pesanan</a>
                 </div>
                 <div class="card-body p-0">
                     @if($activeOrders->isEmpty())
@@ -139,16 +139,18 @@
                             <tbody>
                                 @foreach($activeOrders as $order)
                                 <tr>
-                                    <td>{{ $order->id }}</td>
-                                    <td>{{ $order->customer_name }}</td>
-                                    <td>{{ $order->order_time->format('H:i') }} <small class="text-muted d-block">{{ $order->order_time->diffForHumans() }}</small></td>
-                                    {{-- Untuk badge, sebaiknya gunakan class Bootstrap yang theme-aware seperti bg-body-secondary atau bg-*-subtle --}}
-                                    {{-- Contoh: <span class="badge bg-body-secondary {{ $order->status_class }} border border-1">{{ $order->status }}</span> --}}
-                                    {{-- Atau, jika $order->status_class sudah termasuk warna background: <span class="badge {{ $order->status_class }}">{{ $order->status }}</span> --}}
-                                    <td><span class="badge bg-light-subtle {{ $order->status_class }} border border-secondary-subtle">{{ $order->status }}</span></td> {{-- Menggunakan bg-light-subtle sebagai contoh, sesuaikan $order->status_class --}}
+                                    <td>#{{ $order->id }}</td>
+                                    <td>{{ $order->user->name }}</td>
+                                    <td>{{ $order->created_at->diffForHumans() }}</td>
                                     <td>
-                                        <a href="#" class="btn btn-sm btn-outline-info me-1" title="Lihat Detail"><i class="bi bi-eye"></i></a>
-                                        <a href="#" class="btn btn-sm btn-outline-secondary" title="Ubah Status"><i class="bi bi-pencil"></i></a>
+                                        <span class="badge bg-{{ $order->status == 'Menunggu Konfirmasi' ? 'warning' : ($order->status == 'Diproses' ? 'primary' : 'info') }}">
+                                            {{ $order->status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{{ route('seller.orders.show', $order->id) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i> Detail
+                                        </a>
                                     </td>
                                 </tr>
                                 @endforeach
@@ -166,22 +168,52 @@
                     <a href="{{ route('seller.menus.create') }}" class="btn btn-sm btn-primary"><i class="bi bi-plus-circle"></i> Tambah Produk</a>
                 </div>
                 <div class="card-body p-0">
-                     @if($products->isEmpty())
+                    @php
+                        $productsHabis = $products->filter(fn($p) => $p->stock == 0);
+                    @endphp
+                    @if($productsHabis->count() > 0)
+                        <div class="alert alert-warning d-flex align-items-center mb-3" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2" style="font-size:1.2rem"></i>
+                            <div>
+                                <strong>Beberapa produk stoknya habis!</strong>
+                                <ul class="mb-0">
+                                    @foreach($productsHabis as $product)
+                                        <li>
+                                            <a href="{{ route('seller.menus.edit', $product->id) }}" class="text-decoration-underline fw-semibold">{{ $product->name }}</a>
+                                            <span class="badge bg-danger ms-1">Stok Habis</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                                <span class="text-muted">Segera isi ulang stok agar produk bisa dipesan kembali.</span>
+                            </div>
+                        </div>
+                    @endif
+                    @if($products->isEmpty())
                         <p class="text-center text-muted p-4">Anda belum menambahkan produk.</p>
                     @else
                     <ul class="list-group list-group-flush">
                         @foreach($products as $product)
                         <li class="list-group-item d-flex justify-content-between align-items-center">
                             <div class="d-flex align-items-center">
-                                <img src="{{ $product->image_url }}" alt="{{ $product->name }}" class="product-img-sm me-3">
+                                <img src="{{ $product->image ? asset('storage/' . $product->image) : 'https://via.placeholder.com/48x48.png?text=Menu' }}"
+                                     alt="{{ $product->name }}"
+                                     class="product-img-sm me-3">
                                 <div>
                                     <h6 class="mb-0">{{ $product->name }}</h6>
                                     <small class="text-muted">Rp{{ number_format($product->price, 0, ',', '.') }} - Stok: {{ $product->stock }}</small>
                                 </div>
                             </div>
                             <div>
-                                <a href="#" class="btn btn-sm btn-outline-secondary me-1" title="Edit"><i class="bi bi-pencil-square"></i></a>
-                                <a href="#" class="btn btn-sm btn-outline-danger" title="Hapus"><i class="bi bi-trash"></i></a>
+                                <a href="{{ route('seller.menus.edit', $product->id) }}" class="btn btn-sm btn-outline-secondary me-1" title="Edit">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                <form action="{{ route('seller.menus.destroy', $product->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus menu ini?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
                             </div>
                         </li>
                         @endforeach

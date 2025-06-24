@@ -48,4 +48,22 @@ class User extends Authenticatable
     }
 
     protected $guard_name = 'web'; // atau guard lain jika perlu
+
+    /**
+     * Get the kantin associated with the user.
+     */
+    public function kantin()
+    {
+        return $this->hasOne(Kantin::class);
+    }
+
+    public function sentMessages()
+    {
+        return $this->hasMany(\App\Models\Message::class, 'sender_id');
+    }
+
+    public function receivedMessages()
+    {
+        return $this->hasMany(\App\Models\Message::class, 'receiver_id');
+    }
 }

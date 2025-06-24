@@ -3,127 +3,168 @@
 namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Events\OrderCompletedEvent;
+use App\Events\OrderStatusChangedEvent;
 
 class OrderController extends Controller
 {
+    use AuthorizesRequests;
+
     /**
      * Display a listing of the seller's orders.
      */
-    public function index(Request $request): View
+    public function index(Request $request)
     {
         $seller = Auth::user();
-        // TODO: Ambil data pesanan aktual untuk kantin milik seller ini dari database
-        // Filter berdasarkan status jika ada parameter request
-        $statusFilter = $request->query('status');
+        $kantinId = $seller->kantin->id ?? null;
 
-        $dummyOrders = collect([
-            (object)[
-                'id' => 'ORD-KNTN01-001',
-                'customer_name' => 'Pelanggan Satu',
-                'order_date' => Carbon::now()->subHours(2),
-                'total_amount' => 75000,
-                'status' => 'Menunggu Konfirmasi',
-                'items_summary' => 'Nasi Goreng x2, Es Teh x2',
-                'payment_status' => 'Belum Dibayar',
-            ],
-            (object)[
-                'id' => 'ORD-KNTN01-002',
-                'customer_name' => 'Pelanggan Dua',
-                'order_date' => Carbon::now()->subHours(5),
-                'total_amount' => 45000,
-                'status' => 'Diproses',
-                'items_summary' => 'Ayam Geprek x1, Jus Alpukat x1',
-                'payment_status' => 'Lunas',
-            ],
-            (object)[
-                'id' => 'ORD-KNTN01-003',
-                'customer_name' => 'Pelanggan Tiga',
-                'order_date' => Carbon::now()->subDay(),
-                'total_amount' => 20000,
-                'status' => 'Selesai',
-                'items_summary' => 'Mie Ayam x1',
-                'payment_status' => 'Lunas',
-            ],
-            (object)[
-                'id' => 'ORD-KNTN01-004',
-                'customer_name' => 'Pelanggan Empat',
-                'order_date' => Carbon::now()->subMinutes(30),
-                'total_amount' => 30000,
-                'status' => 'Siap Diambil',
-                'items_summary' => 'Soto Ayam x1, Kerupuk x1',
-                'payment_status' => 'Lunas',
-            ],
-        ]);
-
-        $orders = $dummyOrders;
-        if ($statusFilter && $statusFilter !== 'semua') {
-            $orders = $dummyOrders->filter(function ($order) use ($statusFilter) {
-                return strtolower(str_replace(' ', '-', $order->status)) === $statusFilter;
-            });
+        if (!$kantinId) {
+            return view('seller.orders.index', [
+                'orders' => collect(),
+                'statusFilter' => null
+            ])->with('error', 'Anda tidak memiliki kantin terdaftar.');
         }
+
+        // Jika tidak ada filter status, redirect ke status=pending
+        if (!$request->has('status')) {
+            return redirect()->route('seller.orders.index', ['status' => 'pending']);
+        }
+
+        $query = Order::whereHas('orderItems.menu', function ($query) use ($kantinId) {
+            $query->where('kantin_id', $kantinId);
+        })
+        ->with(['user', 'orderItems.menu'])
+        ->orderByRaw("FIELD(status, 'pending') DESC")
+        ->orderBy('created_at', 'desc');
+
+        $statusFilter = $request->query('status');
+        if ($statusFilter && $statusFilter !== 'all') {
+            $query->where('status', $statusFilter);
+        }
+
+        $orders = $query->paginate(10);
 
         return view('seller.orders.index', compact('orders', 'statusFilter'));
     }
 
     /**
      * Update the status of a specific order.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  string  $orderId
-     * @return \Illuminate\Http\RedirectResponse
      */
-    public function updateStatus(Request $request, string $orderId): RedirectResponse
+    public function updateStatus(Request $request, Order $order): RedirectResponse
     {
-        $request->validate([
-            'status' => ['required', 'string', 'in:Menunggu Konfirmasi,Diproses,Siap Diambil,Selesai,Dibatalkan'],
-        ]);
+        try {
+            $this->authorize('update', $order);
 
-        $newStatus = $request->input('status');
+            $request->validate([
+                'status' => ['required', 'string', 'in:pending,processing,completed,cancelled'],
+            ]);
 
-        // TODO: Implementasi logika update status pesanan di database
-        // $order = Order::where('id', $orderId)->where('seller_id', Auth::id())->firstOrFail();
-        // $order->status = $newStatus;
-        // $order->save();
+            $oldStatus = $order->status;
+            $newStatus = $request->input('status');
 
-        return redirect()->route('seller.orders.index', ['status' => strtolower(str_replace(' ', '-', $newStatus))])
-                         ->with('success', "Status pesanan #{$orderId} berhasil diperbarui menjadi {$newStatus}.");
+            $order->update(['status' => $newStatus]);
+
+            // Trigger events for status changes
+            if ($oldStatus !== $newStatus) {
+                if ($newStatus === 'completed') {
+                    event(new OrderCompletedEvent($order));
+                } else {
+                    event(new OrderStatusChangedEvent($order, $oldStatus, $newStatus));
+                }
+            }
+
+            return redirect()->route('seller.orders.index')
+                ->with('success', "Status pesanan #{$order->id} berhasil diperbarui dari " . ucfirst($oldStatus) . " menjadi " . ucfirst($newStatus));
+
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return redirect()->route('seller.orders.index')
+                ->with('error', 'Anda tidak memiliki izin untuk mengubah status pesanan ini.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->route('seller.orders.index')
+                ->with('error', 'Status yang dipilih tidak valid.');
+        } catch (\Exception $e) {
+            \Log::error('Error updating order status: ' . $e->getMessage(), [
+                'order_id' => $order->id,
+                'user_id' => auth()->id(),
+                'requested_status' => $request->input('status')
+            ]);
+
+            return redirect()->route('seller.orders.index')
+                ->with('error', 'Terjadi kesalahan saat memperbarui status pesanan.');
+        }
     }
 
     /**
      * Display the specified order.
-     *
-     * @param  string  $orderId
-     * @return \Illuminate\View\View
      */
-    public function show(string $orderId): View
+    public function show(Order $order): View
     {
-        // Data dummy untuk detail pesanan
-        $order = (object)[
-            'id' => $orderId,
-            'customer_name' => 'Pelanggan Satu Detail',
-            'customer_email' => 'pelanggan1@example.com',
-            'customer_phone' => '081234567890',
-            'order_date' => \Carbon\Carbon::now()->subHours(2),
-            'status' => 'Menunggu Konfirmasi',
-            'payment_status' => 'Belum Dibayar',
-            'payment_method' => 'COD (Bayar di Tempat)',
-            'shipping_address' => 'Jl. Kampus No. 123, Fakultas Teknik, Meja 5',
-            'items' => collect([
-                (object)['product_name' => 'Nasi Goreng Spesial', 'quantity' => 2, 'price_per_item' => 25000, 'subtotal' => 50000, 'notes' => 'Tidak pedas'],
-                (object)['product_name' => 'Es Teh Manis', 'quantity' => 2, 'price_per_item' => 5000, 'subtotal' => 10000, 'notes' => null],
-            ]),
-            'subtotal_amount' => 60000,
-            'shipping_cost' => 0,
-            'discount_amount' => 0,
-            'total_amount' => 75000,
-            'notes_from_customer' => 'Tolong sendok dan garpu plastik juga ya.',
-        ];
+        $this->authorize('view', $order);
+
+        // Eager load relationships
+        $order->load(['user', 'orderItems.menu']);
 
         return view('seller.orders.show', compact('order'));
+    }
+
+    /**
+     * Remove the specified order from storage.
+     */
+    public function destroy(Order $order): RedirectResponse
+    {
+        try {
+            $this->authorize('delete', $order);
+
+            $order->delete();
+
+            return redirect()->route('seller.orders.index')->with('success', "Pesanan #{$order->id} berhasil dihapus.");
+
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return redirect()->route('seller.orders.index')
+                ->with('error', 'Anda tidak memiliki izin untuk menghapus pesanan ini. Pesanan dengan status "' . ucfirst($order->status) . '" tidak dapat dihapus.');
+        } catch (\Exception $e) {
+            \Log::error('Error deleting order: ' . $e->getMessage(), [
+                'order_id' => $order->id,
+                'user_id' => auth()->id(),
+                'order_status' => $order->status
+            ]);
+
+            return redirect()->route('seller.orders.index')
+                ->with('error', 'Terjadi kesalahan saat menghapus pesanan.');
+        }
+    }
+
+    /**
+     * Fetch a single order card HTML.
+     */
+    public function showCard(Order $order): \Illuminate\Http\JsonResponse
+    {
+        try {
+            $this->authorize('view', $order);
+
+            $order->load(['user', 'orderItems.menu']);
+
+            // Definisikan terjemahan status agar konsisten dengan halaman index
+            $statusTranslations = [
+                'pending' => 'Tertunda',
+                'processing' => 'Diproses',
+                'completed' => 'Selesai',
+                'cancelled' => 'Dibatalkan',
+            ];
+
+            $html = view('seller.orders._order_card', compact('order', 'statusTranslations'))->render();
+
+            return response()->json(['success' => true, 'html' => $html]);
+
+        } catch (\Exception $e) {
+            \Log::error("Failed to fetch order card: " . $e->getMessage(), ['order_id' => $order->id]);
+            return response()->json(['success' => false, 'message' => 'Gagal memuat data pesanan.'], 500);
+        }
     }
 }

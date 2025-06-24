@@ -1,6 +1,6 @@
 @extends('layouts.app') {{-- Menggunakan layout app utama --}}
 
-@section('title', 'Laporan Penjualan - KantinKu Seller')
+@section('title', 'Laporan Penjualan')
 
 @push('styles') {{-- Keep other page-specific styles if any --}}
 <style>

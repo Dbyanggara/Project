@@ -84,7 +84,7 @@
                     <a class="nav-link px-3" href="{{ route('logout') }}"
                        onclick="event.preventDefault();
                                     this.closest('form').submit();">
-                        <i class="bi bi-box-arrow-right"></i> Logout
+                        Logout
                     </a>
                 </form>
             </div>
@@ -140,7 +140,7 @@
                 </div>
 
                 <div class="card shadow-sm">
-                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Daftar Pengguna</h5>
                         <a href="{{ route('admin.users.create') }}" class="btn btn-primary btn-sm">
                             <i class="bi bi-plus-circle me-1"></i>

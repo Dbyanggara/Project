@@ -14,7 +14,15 @@ return new class extends Migration
         Schema::create('kantins', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->string('location')->nullable();
+            $table->string('image')->nullable();
+            $table->text('description')->nullable();
+            $table->string('operating_hours')->nullable();
+            $table->boolean('is_open')->default(false);
+            $table->string('phone')->nullable();
+            $table->string('email')->nullable()->unique();
+            $table->text('address')->nullable();
             $table->timestamps();
         });
     }

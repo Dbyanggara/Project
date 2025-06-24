@@ -24,6 +24,7 @@ class Notification extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'id',               // UUID primary key
         'type',             // Tipe notifikasi (misalnya, nama kelas notifikasi)
         'notifiable_type',  // Tipe model yang ternotifikasi (misalnya, App\Models\User)
         'notifiable_id',    // ID dari model yang ternotifikasi (misalnya, user_id)
@@ -40,6 +41,20 @@ class Notification extends Model
         'data' => 'array',
         'read_at' => 'datetime',
     ];
+
+    /**
+     * Indicates if the IDs are auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = false;
+
+    /**
+     * The data type of the auto-incrementing ID.
+     *
+     * @var string
+     */
+    protected $keyType = 'string';
 
     /**
      * Mendapatkan model parent yang dapat dinotifikasi (user, dll.).

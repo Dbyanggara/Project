@@ -13,10 +13,13 @@ class UserDashboardController extends Controller
      */
     public function index(): View
     {
-        // Ambil semua data kantin. Anda bisa menambahkan logika filter atau paginasi di sini jika perlu.
-        // Contoh: $kantins = Kantin::where('status', 'Buka')->get();
-        // Untuk sekarang, kita ambil semua kantin sebagai contoh.
-        $kantins = Kantin::all(); // Pastikan model Kantin dan tabelnya ada
+        // Ambil semua data kantin dengan relasi user dan urutkan berdasarkan yang terbaru
+        $kantins = Kantin::with(['user', 'menus'])
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        // Log data kantin untuk debugging
+        \Log::info('Kantins data:', $kantins->toArray());
 
         return view('user.dashboard', compact('kantins'));
     }

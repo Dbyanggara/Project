@@ -11,11 +11,8 @@ class NotificationComposer
     {
         $unreadNotificationsCount = 0;
         if (Auth::check() && Auth::user()->hasRole('user')) {
-            // Ganti dengan query ke database notifikasi jika sudah ada model Notification
-            $dummyNotifications = collect([
-                (object)['read_at' => null], (object)['read_at' => null], (object)['read_at' => now()]
-            ]);
-            $unreadNotificationsCount = $dummyNotifications->whereNull('read_at')->count();
+            // Menggunakan relasi unreadNotifications yang disediakan oleh trait Notifiable
+            $unreadNotificationsCount = Auth::user()->unreadNotifications->count();
         }
         $view->with('unreadNotificationsCountGlobal', $unreadNotificationsCount);
     }

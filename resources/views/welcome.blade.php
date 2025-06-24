@@ -213,7 +213,7 @@
         </section>
 
         <!-- CARA KERJA -->
-        <section class="py-5 bg-light rounded-4 my-5">
+        <section class="py-5 rounded-4 my-5">
             <div class="container">
                 <h2 class="text-center section-title">Cara Kerja KantinKu</h2>
                 <div class="row text-center">
@@ -273,6 +273,48 @@
                         <figcaption class="blockquote-footer mt-3">
                             Mahasiswa
                         </figcaption>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Section -->
+        <div class="row text-center my-5 py-5">
+            <!-- Stat Item 1 -->
+            <div class="col-md-4 mb-4">
+                <div class="display-4 fw-bold">10+</div>
+                <div class="text-muted">Kantin Terpercaya</div>
+            </div>
+            <!-- Stat Item 2 -->
+            <div class="col-md-4 mb-4">
+                <div class="display-4 fw-bold">50+</div>
+                <div class="text-muted">Menu Pilihan</div>
+            </div>
+            <!-- Stat Item 3 -->
+            <div class="col-md-4 mb-4">
+                <div class="display-4 fw-bold">1k+</div>
+                <div class="text-muted">Pelanggan Puas</div>
+            </div>
+        </div>
+
+        <!-- CTA Section -->
+        <section class="py-5 rounded-4 my-5 cta-section">
+            <div class="container px-5">
+                <div class="row gx-5 align-items-center">
+                    <div class="col-lg-8">
+                        <h2 class="display-4 fw-bold mb-3">Pesan Sekarang!</h2>
+                        <p class="lead text-muted mb-4">Solusi modern untuk kantin sekolah, kampus, dan kantor. Pesan makanan, pantau status pesanan, dan nikmati fitur realtime serta chat langsung dengan penjual!</p>
+                        <div class="d-grid gap-2 d-sm-flex justify-content-center justify-content-lg-start">
+                            @guest
+                                <a href="{{ route('login') }}" class="btn btn-primary btn-lg px-4 gap-3"><i class="bi bi-arrow-right-circle me-2"></i>Mulai Pesan</a>
+                            @else
+                                <a href="{{ route('dashboard') }}" class="btn btn-primary btn-lg px-4 gap-3"><i class="bi bi-speedometer2 me-2"></i>Ke Dashboard</a>
+                            @endguest
+                            <a href="#fitur" class="btn btn-outline-primary btn-lg px-4 gap-3"><i class="bi bi-eye me-2"></i>Lihat Fitur</a>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80" alt="Kantin Modern" class="img-fluid hero-image-animated shadow-lg" style="max-height: 350px; object-fit: cover;">
                     </div>
                 </div>
             </div>

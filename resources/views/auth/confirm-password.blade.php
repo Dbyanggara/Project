@@ -14,6 +14,7 @@
                             type="password"
                             name="password"
                             required autocomplete="current-password" />
+            <input type="hidden" name="username" autocomplete="username" value="{{ auth()->user()->email }}">
 
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>

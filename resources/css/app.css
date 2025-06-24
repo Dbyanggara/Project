@@ -1,3 +1,64 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Chat Widget Styles */
+.message {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.message.sent {
+    align-items: flex-end;
+}
+
+.message.received {
+    align-items: flex-start;
+}
+
+.message-content {
+    max-width: 80%;
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    background-color: #f3f4f6;
+}
+
+.message.sent .message-content {
+    background-color: #2563eb;
+    color: white;
+}
+
+.message-content p {
+    margin-bottom: 0.25rem;
+}
+
+.message-content small {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+.conversation-item {
+    transition: background-color 0.2s;
+}
+
+.conversation-item:hover {
+    background-color: #f9fafb;
+}
+
+#chatWidgetContent::-webkit-scrollbar {
+    width: 6px;
+}
+
+#chatWidgetContent::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+#chatWidgetContent::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+#chatWidgetContent::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}

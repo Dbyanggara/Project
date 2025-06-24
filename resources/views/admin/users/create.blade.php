@@ -77,7 +77,7 @@
                     <a class="nav-link px-3" href="{{ route('logout') }}"
                        onclick="event.preventDefault();
                                     this.closest('form').submit();">
-                        <i class="bi bi-box-arrow-right"></i> Logout
+                        Logout
                     </a>
                 </form>
             </div>

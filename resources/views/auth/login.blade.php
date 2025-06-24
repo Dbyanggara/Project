@@ -88,14 +88,14 @@
         @csrf
         <div class="mb-3">
             <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control w-100 @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" required autofocus placeholder="Masukkan email Anda">
+            <input type="email" class="form-control w-100 @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" required autofocus placeholder="Masukkan email Anda" autocomplete="username">
             @error('email')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>
         <div class="mb-3">
             <label for="password" class="form-label">Password</label>
-            <input type="password" class="form-control w-100 @error('password') is-invalid @enderror" id="password" name="password" required placeholder="Masukkan kata sandi Anda">
+            <input type="password" class="form-control w-100 @error('password') is-invalid @enderror" id="password" name="password" required placeholder="Masukkan kata sandi Anda" autocomplete="current-password">
             @error('password')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror

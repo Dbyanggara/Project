@@ -78,28 +78,29 @@
         @csrf
         <div class="mb-3">
             <label for="name" class="form-label">Nama Lengkap</label>
-            <input type="text" class="form-control w-100 @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" required autofocus placeholder="Masukkan nama lengkap Anda">
+            <input type="text" class="form-control w-100 @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" required autofocus placeholder="Masukkan nama lengkap Anda" autocomplete="name">
             @error('name')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>
         <div class="mb-3">
             <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control w-100 @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" required placeholder="Masukkan alamat email Anda">
+            <input type="email" class="form-control w-100 @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" required placeholder="Masukkan alamat email Anda" autocomplete="username">
             @error('email')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>
         <div class="mb-3">
             <label for="password" class="form-label">Password</label>
-            <input type="password" class="form-control w-100 @error('password') is-invalid @enderror" id="password" name="password" required placeholder="Buat kata sandi Anda">
+            <input type="password" class="form-control w-100 @error('password') is-invalid @enderror" id="password" name="password" required placeholder="Buat kata sandi Anda" autocomplete="new-password">
+            <input type="hidden" name="username" autocomplete="username" value="{{ old('email') }}">
             @error('password')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>
         <div class="mb-3">
             <label for="password_confirmation" class="form-label">Konfirmasi Password</label>
-            <input type="password" class="form-control w-100 @error('password_confirmation') is-invalid @enderror" id="password_confirmation" name="password_confirmation" required placeholder="Ulangi kata sandi Anda">
+            <input type="password" class="form-control w-100 @error('password_confirmation') is-invalid @enderror" id="password_confirmation" name="password_confirmation" required placeholder="Ulangi kata sandi Anda" autocomplete="new-password">
             @error('password_confirmation')
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror

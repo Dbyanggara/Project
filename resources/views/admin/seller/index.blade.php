@@ -130,7 +130,7 @@
                 </div>
 
                 <div class="card shadow-sm">
-                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Daftar Kantin</h5>
                         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalTambahKantin">
                             <i class="bi bi-plus-circle me-1"></i>
