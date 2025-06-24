@@ -1,25 +1,46 @@
 services:
   - type: web
     name: laravel-app
-    env: php
+    env: docker
     plan: free
-    buildCommand: |
-      composer install --no-dev --optimize-autoloader
-      php artisan key:generate
-      php artisan migrate --force
-      npm install
-      npm run build
-    startCommand: php artisan serve --host 0.0.0.0 --port 10000
+    # Dockerfile path is relative to the repository root
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: APP_ENV
         value: production
       - key: APP_KEY
-        sync: false
+        generateValue: true # Render can generate this for you
       - key: APP_DEBUG
         value: false
       - key: APP_URL
-        value: https://<YOUR_RENDER_URL>
-      # Tambahkan variabel lain sesuai kebutuhan (DB_*, MAIL_*, dsb)
+        fromService:
+          type: web
+          name: laravel-app
+          property: url
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: laravel-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: laravel-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: laravel-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: laravel-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: laravel-db
+          property: password
 databases:
   - name: laravel-db
     plan: free
+    databaseName: laravel
+    user: laravel_user
