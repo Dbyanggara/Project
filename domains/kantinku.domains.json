@@ -7,7 +7,7 @@
     "email": "minecraftpe1416@gmail.com"
   },
   "record": {
-    "CNAME": "tunnel.cloudflare.com" // Pastikan username GitHub benar!
+    "CNAME": "tunnel.cloudflare.com"
   },
   "proxied": true
 }
