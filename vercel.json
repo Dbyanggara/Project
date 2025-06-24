@@ -1,0 +1,29 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/index.php",
+      "use": "vercel-php@0.6.0"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/node",
+      "config": {
+        "distDir": "public"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(css|js|img)/(.*)",
+      "dest": "/public/$1/$2"
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/index.php"
+    }
+  ]
+}
