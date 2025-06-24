@@ -1,13 +1,13 @@
 {
   "description": "Website Kantinku - Projek pribadi untuk manajemen kantin sekolah",
-  "domain": "is-not-a.dev",
+  "domain": "is-local.org",
   "subdomain": "kantinku",
   "owner": {
     "repo": "https://github.com/Dbyanggara/Project",
     "email": "minecraftpe1416@gmail.com"
   },
   "record": {
-    "CNAME": "dbyanggara.github.io"
+    "CNAME": "tunnel.cloudflare.com"
   },
-  "proxied": false
+  "proxied": true
 }
