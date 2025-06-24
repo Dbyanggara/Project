@@ -9,7 +9,7 @@
   "record": {
     "A": ["1.1.1.1", "1.0.0.1"],
     "AAAA": ["::1", "::2"],
-    "CNAME": "kantinku.com",
+    "CNAME": "kantinku.github.io",
     "MX": ["mx1.kantin1.com", "mx2.kantin2.com"],
     "TXT": ["kantin_verification=1234567890"],
     "CAA": [
