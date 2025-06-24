@@ -9,5 +9,5 @@
   "record": {
     "CNAME": "dbyanggara.github.io"
   },
-  "proxied": false  // Wajib false
+  "proxied": false
 }
