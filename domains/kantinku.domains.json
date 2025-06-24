@@ -1,0 +1,43 @@
+{
+  "description": "Deskripsi Proyek",
+  "domain": "is-not-a.dev",
+  "subdomain": "kantinku",
+  "owner": {
+    "repo": "https://github.com/Dbyanggara/Project",
+    "email": "minecraftpe1416@gmail.com"
+  },
+  "record": {
+    "A": ["1.1.1.1", "1.0.0.1"],
+    "AAAA": ["::1", "::2"],
+    "CNAME": "kantinku.com",
+    "MX": ["mx1.kantin1.com", "mx2.kantin2.com"],
+    "TXT": ["kantin_verification=1234567890"],
+    "CAA": [
+      {
+        "flags": 0,
+        "tag": "issue",
+        "value": "letsencrypt.org"
+      },
+      {
+        "flags": 0,
+        "tag": "issuewild",
+        "value": "sectigo.com"
+      }
+    ],
+    "SRV": [
+      {
+        "priority": 10,
+        "weight": 60,
+        "port": 5060,
+        "target": "sipserver.kantin1.com"
+      },
+      {
+        "priority": 20,
+        "weight": 10,
+        "port": 5061,
+        "target": "sipbackup.kantin2.com"
+      }
+    ]
+  },
+  "proxied": false
+}
